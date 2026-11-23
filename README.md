@@ -14,8 +14,8 @@ Ekipa: Sladjana in Stefan (Ssqured).
 | Stefan | Termini | Stefanova izbira | 8005 | Načrt |
 | Stefan | Rezervacije | Stefanova izbira | 8006 | Načrt |
 
-Vsaka implementirana storitev ima svojo SQLite bazo in Docker volume.
-Podatkovne baze si ne delijo; komunikacija med storitvami je HTTP.
+Vsaka implementirana storitev ima svoj PostgreSQL strežnik, svojo bazo in trajni Docker volume.
+Podatkovne baze si ne delijo; komunikacija med storitvami poteka prek skupnega REST API Gateway-a (Nginx).
 Uporabljeni so trije različni spletni frameworki.
 
 ## Zagon
@@ -26,11 +26,36 @@ V terminalu v korenu projekta:
 ```sh
 docker compose up --build -d
 docker compose ps
-python3 tests/test_api.py
 ```
+
+API Gateway je na http://localhost:8080. Kontejnerji Uporabniki, Termini in
+Rezervacije morajo biti ob združitvi na istem Docker omrežju z imeni
+`uporabniki`, `termini`, `rezervacije` in notranjim portom 8000.
+Če uporabljajo druge porte, prilagodite upstream v `gateway/nginx.conf`.
+
+Dokler Stefanove storitve niso na voljo, lahko lokalno preverimo HTTP pogodbo
+s testnim dvojnikom, ki **ni implementacija** njegovih mikrostoritev:
+
+```sh
+docker compose -f compose.yaml -f compose.test.yaml up --build -d
+python3 tests/test_api.py
+docker compose -f compose.yaml -f compose.test.yaml rm -sf test-partner
+python3 tests/test_partner_unavailable.py
+```
+
+Zadnji test je namenjen stanju brez pravih partnerskih storitev.
+Testni dvojnik je samo v dodatni konfiguraciji in ni vključen pri običajnem
+zagonu. Končno povezovanje in testiranje z dejanskima storitvama Uporabniki in
+Termini je potrebno po njuni implementaciji. Ne zaganjajte dvojnika hkrati z
+njunima pravima kontejnerjema.
 
 Prvi zagon lahko traja več minut zaradi prenosa slik. Docker Desktop mora biti vklopljen.
 Za ustavitev brez brisanja podatkov uporabite `docker compose down`.
+PostgreSQL podatkovne baze niso izpostavljene gostiteljskemu omrežju.
+Privzeto geslo je namenjeno izključno lokalnemu razvoju; prepišite ga prek
+`POSTGRES_PASSWORD` (npr. v ignorirani datoteki .env) pred prvim zagonom.
+SQLite volumni iz prejšnje verzije niso izbrisani ali preneseni; nova baza
+se inicializira prazna.
 
 | Storitev | Health | OpenAPI |
 |---|---|---|
@@ -60,15 +85,34 @@ Za vsak spodnji par entitet je na voljo vseh pet operacij:
 
 | Mikrostoritev | Entiteta 1 | Entiteta 2 | GET | POST | PUT | DELETE |
 |---|---|---|---:|---:|---:|---:|
-| Članarine | /paketi | /clanarine | 4 | 2 | 2 | 2 |
-| Obvestila | /obvestila | /nastavitve | 5 | 2 | 2 | 2 |
-| Ocene | /ocene | /odgovori | 4 | 2 | 2 | 2 |
+| Članarine | /paketi | /clanarina | 4 | 2 | 2 | 2 |
+| Obvestila | /obvestila | /nastavitve | 6 | 2 | 2 | 2 |
+| Ocene | /ocene | /odgovori | 6 | 2 | 2 | 2 |
 
 Število GET ne vključuje tehničnih poti /health in /openapi.json.
 Statusi: 200 (uspeh), 201 (ustvarjeno), 204 (izbrisano),
-400 ali 422 (neveljavni podatki), 404 (ni zapisa), 409 (konflikt).
+400 ali 422 (neveljavni podatki), 404 (ni zapisa), 409 (konflikt), 503 (odvisna storitev ni dosegljiva).
 
-## Medsebojna komunikacija
+Operacije iz prvotnega načrta: GET/POST/PUT `/clanarina` (GET/PUT po ID),
+POST `/obvestila`, GET `/obvestila/uporabnik/{id}`, POST `/ocene`,
+GET `/ocene/termin/{id}` in GET `/ocene/trener/{id}`.
+Pot `/clanarine` ostaja združljiva s prejšnjo različico.
+Ocena lahko vsebuje tudi `trener_id`.
+
+## Medsebojna komunikacija prek API Gateway-a
+
+Klici med članoma skupine (vsi preko `http://gateway:8080`):
+
+- Članarine → Uporabniki: GET /uporabnik/{id} pred ustvarjanjem in posodabljanjem članarine.
+- Obvestila → Uporabniki: GET /uporabnik/{id} pred ustvarjanjem in posodabljanjem obvestila ali nastavitev.
+- Ocene → Termini: GET /termini/{id} pred ustvarjanjem in posodabljanjem ocene.
+
+Če zunanji zapis ne obstaja, storitev vrne 409 in ga ne shrani.
+Če je odvisna storitev nedosegljiva, vrne 503. API pogodba sledi prvotnemu načrtu:
+200 za obstoječi zapis, 404 za neobstoječega. Po združitvi je treba preveriti
+točne poti, podatkovne tipe in po potrebi avtorizacijo s Stefanom.
+
+Dodatne povezave:
 
 - Članarine → Obvestila: POST /obvestila pri ustvarjanju članarine.
 - Ocene → Obvestila: POST /obvestila pri ustvarjanju ocene.
@@ -82,10 +126,12 @@ Gre za notranja obvestila v aplikaciji, ne za dejansko pošiljanje e-pošte/SMS.
 
 ## Ročni primer (Swagger UI ali terminal)
 
+Za spodnje primere morata biti na voljo Uporabniki in Termini (ali testni dvojnik).
+
 Najprej ustvarite paket in si zapišite njegov dejanski ID:
 
 ```sh
-curl -X POST http://localhost:8001/paketi \
+curl -X POST http://localhost:8080/paketi \
   -H 'Content-Type: application/json' \
   -d '{"naziv":"Mesecni","cena_centov":2999}'
 ```
@@ -93,20 +139,21 @@ curl -X POST http://localhost:8001/paketi \
 Če odgovor vrne ID 1, ustvarite članarino (sicer vnesite vrnjeni ID):
 
 ```sh
-curl -X POST http://localhost:8001/clanarine \
+curl -X POST http://localhost:8080/clanarina \
   -H 'Content-Type: application/json' \
   -d '{"uporabnik_id":1,"paket_id":1,"zacetek":"2026-11-23","konec":"2026-12-23"}'
-curl http://localhost:8002/obvestila
-curl http://localhost:8002/uporabniki/1/povzetek
+curl http://localhost:8080/obvestila/uporabnik/1
+curl http://localhost:8080/uporabniki/1/povzetek
 ```
 
 Nato ustvarite oceno:
 
 ```sh
-curl -X POST http://localhost:8003/ocene \
+curl -X POST http://localhost:8080/ocene \
   -H 'Content-Type: application/json' \
-  -d '{"uporabnik_id":1,"termin_id":1,"ocena":5,"komentar":"Odlicno"}'
-curl http://localhost:8002/obvestila
+  -d '{"uporabnik_id":1,"termin_id":1,"trener_id":10,"ocena":5,"komentar":"Odlicno"}'
+curl http://localhost:8080/ocene/termin/1
+curl http://localhost:8080/ocene/trener/10
 ```
 
 ## Datotečna struktura
@@ -115,22 +162,25 @@ curl http://localhost:8002/obvestila
 FitUra/
 ├── compose.yaml
 ├── README.md
-├── docs/stefan.md
+├── compose.test.yaml
+├── gateway/nginx.conf
 ├── storitve/
 │   ├── clanarine/  (app.py, requirements.txt, Dockerfile, openapi.json)
 │   ├── obvestila/  (app.py, requirements.txt, Dockerfile, openapi.json)
 │   └── ocene/      (app.js, package.json, package-lock.json, Dockerfile, openapi.json)
 └── tests/
     ├── test_api.py
+    ├── test_partner_unavailable.py
+    ├── partner_stub.py
     └── export_openapi.py
 ```
 
 ## Dobre prakse in meje prve naloge
 
-Ločene baze in volumni, parametri SQL, validacija vhodov, HTTP časovne omejitve,
-smiselne statusne kode, brez gesel v kodi, verzionirane glavne knjižnice,
-OpenAPI in integracijski testi. Baze vsebujejo samo lokalne razvojne podatke.
-Uporabniki in termini so trenutno zunanji ID-ji, brez preverjanja pri Stefanu.
+Ločeni PostgreSQL strežniki in volumni, parametrizirane SQL poizvedbe, indeksi za
+filtriranje, zapiranje povezav in omejen connection pool, validacija vhodov,
+HTTP časovne omejitve, smiselne statusne kode, majhne osnovne Docker slike
+(slim in alpine), verzionirane knjižnice, OpenAPI in integracijski testi.
+Baze vsebujejo samo lokalne razvojne podatke.
 Prva naloga še ne vključuje prijave, avtorizacije, dejanskega plačevanja, frontenda
 ali varne produkcijske namestitve. Teh API-jev ne izpostavljajte internetu.
-Glej [Stefanov predlog](docs/stefan.md).

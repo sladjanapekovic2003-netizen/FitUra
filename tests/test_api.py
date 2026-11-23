@@ -11,7 +11,8 @@ BASE = {name: f"http://localhost:{port}" for name, port in
 
 
 def call(service, method, path, data=None, expected=200):
-    req = Request(BASE[service] + path, method=method,
+    base = "http://localhost:8080" if service == "gateway" else BASE[service]
+    req = Request(base + path, method=method,
                   data=None if data is None else json.dumps(data).encode(),
                   headers={"Content-Type": "application/json"})
     try:
@@ -36,6 +37,15 @@ class FitUraTests(unittest.TestCase):
                     time.sleep(1)
             else:
                 raise RuntimeError(f"{service} is not ready")
+        for _ in range(30):
+            try:
+                call("gateway", "GET", "/uporabnik/1")
+                call("gateway", "GET", "/termini/1")
+                break
+            except (URLError, OSError, AssertionError):
+                time.sleep(1)
+        else:
+            raise RuntimeError("Partner API contract is not ready; start compose.test.yaml")
 
     def test_openapi(self):
         for service in BASE:
@@ -67,9 +77,10 @@ class FitUraTests(unittest.TestCase):
         package_path = "/paketi/" + str(package["id"])
         body = {"uporabnik_id": user, "paket_id": package["id"], "zacetek": "2026-01-01", "konec": "2026-02-01"}
         try:
-            membership = self.crud("clanarine", "/clanarine", body, {**body, "konec": "2026-03-01"})
+            membership = self.crud("clanarine", "/clanarina", body, {**body, "konec": "2026-03-01"})
             self.assertTrue(membership["obvestilo_poslano"])
             call("clanarine", "POST", "/clanarine", {**body, "konec": "2025-01-01"}, 422)
+            call("clanarine", "POST", "/clanarina", {**body, "uporabnik_id": 999}, 409)
             notifications = call("obvestila", "GET", "/obvestila")
             matching = [n for n in notifications if n["uporabnik_id"] == user]
             self.assertTrue(matching)
@@ -85,12 +96,15 @@ class FitUraTests(unittest.TestCase):
         settings = {"uporabnik_id": user, "email": True, "push": False}
         self.crud("obvestila", "/nastavitve", settings, {**settings, "push": True})
         call("obvestila", "POST", "/obvestila", {**data, "prebrano": "true"}, 400)
+        call("obvestila", "POST", "/obvestila", {**data, "uporabnik_id": 999}, 409)
         package = call("clanarine", "POST", "/paketi", {"naziv": "Povzetek", "cena_centov": 100}, 201)
         membership = call("clanarine", "POST", "/clanarine", {
             "uporabnik_id": user, "paket_id": package["id"], "zacetek": "2026-01-01", "konec": "2026-02-01"}, 201)
         summary = call("obvestila", "GET", f"/uporabniki/{user}/povzetek")
         self.assertEqual(summary["neprebrana"], 1)
         self.assertEqual(summary["clanarine"][0]["id"], membership["id"])
+        self.assertEqual(len(call("gateway", "GET", f"/obvestila/uporabnik/{user}")), 1)
+        self.assertEqual(call("gateway", "GET", f"/clanarina/{membership['id']}")["id"], membership["id"])
         call("clanarine", "DELETE", "/paketi/" + str(package["id"]), expected=409)
         call("clanarine", "DELETE", "/clanarine/" + str(membership["id"]), expected=204)
         call("clanarine", "DELETE", "/paketi/" + str(package["id"]), expected=204)
@@ -100,10 +114,13 @@ class FitUraTests(unittest.TestCase):
 
     def test_ocene_and_notification(self):
         user = time.time_ns() % 2000000000 + 1
-        body = {"uporabnik_id": user, "termin_id": 1, "ocena": 4, "komentar": "Super"}
+        body = {"uporabnik_id": user, "termin_id": 1, "trener_id": 10, "ocena": 4, "komentar": "Super"}
         review = self.crud("ocene", "/ocene", body, {**body, "ocena": 5})
         self.assertTrue(review["obvestilo_poslano"])
         existing = call("ocene", "POST", "/ocene", body, 201)
+        self.assertIn(existing["id"], [r["id"] for r in call("gateway", "GET", "/ocene/termin/1")])
+        self.assertIn(existing["id"], [r["id"] for r in call("gateway", "GET", "/ocene/trener/10")])
+        call("ocene", "POST", "/ocene", {**body, "termin_id": 999}, 409)
         reply = {"ocena_id": existing["id"], "besedilo": "Hvala"}
         self.crud("ocene", "/odgovori", reply, {**reply, "besedilo": "Najlepša hvala"})
         call("ocene", "POST", "/ocene", {**body, "ocena": 10}, 400)

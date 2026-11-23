@@ -1,32 +1,31 @@
 """Članarine in paketi članarin."""
 import os
-import sqlite3
-from contextlib import closing
+import psycopg
+from psycopg.rows import dict_row
 from datetime import date
 import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
 app = FastAPI(title="FitUra - Članarine", version="1.0.0")
-DB = os.getenv("DB_PATH", "clanarine.db")
+DB = os.environ["DATABASE_URL"]
+GATEWAY = os.getenv("GATEWAY_URL", "http://localhost:8080")
 
 
 def connect():
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+    return psycopg.connect(DB, row_factory=dict_row, connect_timeout=3)
 
 
-with closing(connect()) as db, db:
-    db.executescript("""
+with connect() as db:
+    db.execute("""
         CREATE TABLE IF NOT EXISTS paketi (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, naziv TEXT NOT NULL,
+          id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, naziv TEXT NOT NULL,
           cena_centov INTEGER NOT NULL CHECK(cena_centov >= 0));
         CREATE TABLE IF NOT EXISTS clanarine (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, uporabnik_id INTEGER NOT NULL,
+          id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, uporabnik_id INTEGER NOT NULL,
           paket_id INTEGER NOT NULL REFERENCES paketi(id),
-          zacetek TEXT NOT NULL, konec TEXT NOT NULL);
+          zacetek DATE NOT NULL, konec DATE NOT NULL CHECK(konec >= zacetek));
+        CREATE INDEX IF NOT EXISTS clanarine_uporabnik_idx ON clanarine(uporabnik_id);
     """)
 
 
@@ -61,16 +60,16 @@ class ClanarinaCreated(ClanarinaOut):
 
 
 def list_rows(table, user=None):
-    with closing(connect()) as db:
+    with connect() as db:
         if user is not None:
             return [dict(r) for r in db.execute(
-                f"SELECT * FROM {table} WHERE uporabnik_id=? ORDER BY id", (user,))]
+                f"SELECT * FROM {table} WHERE uporabnik_id=%s ORDER BY id", (user,))]
         return [dict(r) for r in db.execute(f"SELECT * FROM {table} ORDER BY id")]
 
 
 def get_row(table, item_id):
-    with closing(connect()) as db:
-        row = db.execute(f"SELECT * FROM {table} WHERE id=?", (item_id,)).fetchone()
+    with connect() as db:
+        row = db.execute(f"SELECT * FROM {table} WHERE id=%s", (item_id,)).fetchone()
     if row is None:
         raise HTTPException(404, "Zapis ne obstaja.")
     return dict(row)
@@ -79,37 +78,37 @@ def get_row(table, item_id):
 def save(table, data, item_id=None):
     fields = list(data)
     try:
-        with closing(connect()) as db, db:
+        with connect() as db:
             if item_id is None:
-                marks = ", ".join("?" for _ in fields)
+                marks = ", ".join("%s" for _ in fields)
                 cursor = db.execute(
-                    f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({marks})",
+                    f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({marks}) RETURNING id",
                     tuple(data.values()))
-                item_id = cursor.lastrowid
+                item_id = cursor.fetchone()["id"]
             else:
-                assignments = ", ".join(f"{f}=?" for f in fields)
-                cursor = db.execute(f"UPDATE {table} SET {assignments} WHERE id=?",
+                assignments = ", ".join(f"{f}=%s" for f in fields)
+                cursor = db.execute(f"UPDATE {table} SET {assignments} WHERE id=%s",
                                     (*data.values(), item_id))
                 if not cursor.rowcount:
                     raise HTTPException(404, "Zapis ne obstaja.")
-    except sqlite3.IntegrityError as exc:
+    except psycopg.IntegrityError as exc:
         raise HTTPException(409, "Neveljaven sklic na paket.") from exc
     return get_row(table, item_id)
 
 
 def remove(table, item_id):
     try:
-        with closing(connect()) as db, db:
-            if not db.execute(f"DELETE FROM {table} WHERE id=?", (item_id,)).rowcount:
+        with connect() as db:
+            if not db.execute(f"DELETE FROM {table} WHERE id=%s", (item_id,)).rowcount:
                 raise HTTPException(404, "Zapis ne obstaja.")
-    except sqlite3.IntegrityError as exc:
+    except psycopg.IntegrityError as exc:
         raise HTTPException(409, "Paket je v uporabi.") from exc
 
 
 def notify(user):
     try:
         response = httpx.post(
-            os.getenv("OBVESTILA_URL", "http://localhost:8002") + "/obvestila",
+            GATEWAY + "/obvestila",
             json={"uporabnik_id": user, "sporocilo": "Članarina je ustvarjena.", "prebrano": False},
             timeout=3)
         response.raise_for_status()
@@ -118,8 +117,20 @@ def notify(user):
         return False
 
 
+def verify_user(user):
+    try:
+        response = httpx.get(GATEWAY + f"/uporabnik/{user}", timeout=3)
+        if response.status_code == 404:
+            raise HTTPException(409, "Uporabnik ne obstaja.")
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise HTTPException(503, "Storitev uporabnikov ni dosegljiva.") from exc
+
+
 @app.get("/health")
 def health():
+    with connect() as db:
+        db.execute("SELECT 1")
     return {"status": "ok"}
 
 
@@ -148,27 +159,35 @@ def delete_paket(item_id: int):
     remove("paketi", item_id)
 
 
+@app.get("/clanarina", response_model=list[ClanarinaOut])
 @app.get("/clanarine", response_model=list[ClanarinaOut])
 def clanarine(uporabnik_id: int | None = None):
     return list_rows("clanarine", uporabnik_id)
 
 
+@app.get("/clanarina/{item_id}", response_model=ClanarinaOut, responses={404: {"description": "Ni zapisa"}})
 @app.get("/clanarine/{item_id}", response_model=ClanarinaOut, responses={404: {"description": "Ni zapisa"}})
 def clanarina(item_id: int):
     return get_row("clanarine", item_id)
 
 
-@app.post("/clanarine", response_model=ClanarinaCreated, status_code=201, responses={409: {"description": "Neveljaven paket"}})
+@app.post("/clanarina", response_model=ClanarinaCreated, status_code=201, responses={409: {"description": "Neveljaven paket ali uporabnik"}, 503: {"description": "Uporabniki nedosegljivi"}})
+@app.post("/clanarine", response_model=ClanarinaCreated, status_code=201, responses={409: {"description": "Neveljaven paket ali uporabnik"}, 503: {"description": "Uporabniki nedosegljivi"}})
 def create_clanarina(body: Clanarina):
+    verify_user(body.uporabnik_id)
     row = save("clanarine", body.model_dump(mode="json"))
     return {**row, "obvestilo_poslano": notify(body.uporabnik_id)}
 
 
-@app.put("/clanarine/{item_id}", response_model=ClanarinaOut, responses={404: {"description": "Ni zapisa"}, 409: {"description": "Neveljaven paket"}})
+@app.put("/clanarina/{item_id}", response_model=ClanarinaOut, responses={404: {"description": "Ni zapisa"}, 409: {"description": "Neveljaven paket ali uporabnik"}, 503: {"description": "Uporabniki nedosegljivi"}})
+@app.put("/clanarine/{item_id}", response_model=ClanarinaOut, responses={404: {"description": "Ni zapisa"}, 409: {"description": "Neveljaven paket ali uporabnik"}, 503: {"description": "Uporabniki nedosegljivi"}})
 def update_clanarina(item_id: int, body: Clanarina):
+    get_row("clanarine", item_id)
+    verify_user(body.uporabnik_id)
     return save("clanarine", body.model_dump(mode="json"), item_id)
 
 
+@app.delete("/clanarina/{item_id}", status_code=204, responses={404: {"description": "Ni zapisa"}})
 @app.delete("/clanarine/{item_id}", status_code=204, responses={404: {"description": "Ni zapisa"}})
 def delete_clanarina(item_id: int):
     remove("clanarine", item_id)

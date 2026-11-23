@@ -131,6 +131,9 @@
           },
           "409": {
             "description": "Napaka"
+          },
+          "503": {
+            "description": "Napaka"
           }
         }
       }
@@ -263,6 +266,9 @@
           },
           "409": {
             "description": "Napaka"
+          },
+          "503": {
+            "description": "Napaka"
           }
         }
       }
@@ -375,6 +381,64 @@
           },
           "400": {
             "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/obvestila/uporabnik/{user_id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "prebrano": {
+                        "type": "boolean"
+                      },
+                      "sporocilo": {
+                        "maxLength": 500,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "uporabnik_id": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "sporocilo",
+                      "prebrano"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Uspeh"
           }
         }
       }
@@ -509,6 +573,12 @@
             "description": "Napaka"
           },
           "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
             "description": "Napaka"
           }
         }

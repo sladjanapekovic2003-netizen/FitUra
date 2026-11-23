@@ -28,6 +28,11 @@
                         "type": "integer",
                         "minimum": 1
                       },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                      },
                       "ocena": {
                         "type": "integer",
                         "minimum": 1,
@@ -43,6 +48,7 @@
                       "id",
                       "uporabnik_id",
                       "termin_id",
+                      "trener_id",
                       "ocena",
                       "komentar"
                     ]
@@ -68,6 +74,11 @@
                   "termin_id": {
                     "type": "integer",
                     "minimum": 1
+                  },
+                  "trener_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true
                   },
                   "ocena": {
                     "type": "integer",
@@ -110,6 +121,11 @@
                       "type": "integer",
                       "minimum": 1
                     },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true
+                    },
                     "ocena": {
                       "type": "integer",
                       "minimum": 1,
@@ -128,6 +144,7 @@
                     "id",
                     "uporabnik_id",
                     "termin_id",
+                    "trener_id",
                     "ocena",
                     "komentar",
                     "obvestilo_poslano"
@@ -137,6 +154,12 @@
             }
           },
           "400": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
             "description": "Napaka"
           }
         }
@@ -174,6 +197,11 @@
                       "type": "integer",
                       "minimum": 1
                     },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true
+                    },
                     "ocena": {
                       "type": "integer",
                       "minimum": 1,
@@ -189,6 +217,7 @@
                     "id",
                     "uporabnik_id",
                     "termin_id",
+                    "trener_id",
                     "ocena",
                     "komentar"
                   ]
@@ -216,6 +245,11 @@
                   "termin_id": {
                     "type": "integer",
                     "minimum": 1
+                  },
+                  "trener_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true
                   },
                   "ocena": {
                     "type": "integer",
@@ -258,6 +292,11 @@
                       "type": "integer",
                       "minimum": 1
                     },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true
+                    },
                     "ocena": {
                       "type": "integer",
                       "minimum": 1,
@@ -273,6 +312,7 @@
                     "id",
                     "uporabnik_id",
                     "termin_id",
+                    "trener_id",
                     "ocena",
                     "komentar"
                   ]
@@ -284,6 +324,12 @@
             "description": "Napaka"
           },
           "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
             "description": "Napaka"
           }
         }
@@ -297,6 +343,144 @@
             "description": "Napaka"
           },
           "409": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/ocene/termin/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "uporabnik_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "termin_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                      },
+                      "ocena": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "komentar": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "termin_id",
+                      "trener_id",
+                      "ocena",
+                      "komentar"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/ocene/trener/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "uporabnik_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "termin_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true
+                      },
+                      "ocena": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "komentar": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "termin_id",
+                      "trener_id",
+                      "ocena",
+                      "komentar"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
             "description": "Napaka"
           }
         }

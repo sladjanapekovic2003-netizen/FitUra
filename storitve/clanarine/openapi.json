@@ -281,7 +281,102 @@
             }
           },
           "409": {
-            "description": "Neveljaven paket"
+            "description": "Neveljaven paket ali uporabnik"
+          },
+          "503": {
+            "description": "Uporabniki nedosegljivi"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clanarina": {
+      "get": {
+        "summary": "Clanarine",
+        "operationId": "clanarine_clanarina_get",
+        "parameters": [
+          {
+            "name": "uporabnik_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uporabnik Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClanarinaOut"
+                  },
+                  "title": "Response Clanarine Clanarina Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Clanarina",
+        "operationId": "create_clanarina_clanarina_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Clanarina"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClanarinaCreated"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Neveljaven paket ali uporabnik"
+          },
+          "503": {
+            "description": "Uporabniki nedosegljivi"
           },
           "422": {
             "description": "Validation Error",
@@ -376,7 +471,10 @@
             "description": "Ni zapisa"
           },
           "409": {
-            "description": "Neveljaven paket"
+            "description": "Neveljaven paket ali uporabnik"
+          },
+          "503": {
+            "description": "Uporabniki nedosegljivi"
           },
           "422": {
             "description": "Validation Error",
@@ -393,6 +491,137 @@
       "delete": {
         "summary": "Delete Clanarina",
         "operationId": "delete_clanarina_clanarine__item_id__delete",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Ni zapisa"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clanarina/{item_id}": {
+      "get": {
+        "summary": "Clanarina",
+        "operationId": "clanarina_clanarina__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClanarinaOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ni zapisa"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Clanarina",
+        "operationId": "update_clanarina_clanarina__item_id__put",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Clanarina"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClanarinaOut"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ni zapisa"
+          },
+          "409": {
+            "description": "Neveljaven paket ali uporabnik"
+          },
+          "503": {
+            "description": "Uporabniki nedosegljivi"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Clanarina",
+        "operationId": "delete_clanarina_clanarina__item_id__delete",
         "parameters": [
           {
             "name": "item_id",

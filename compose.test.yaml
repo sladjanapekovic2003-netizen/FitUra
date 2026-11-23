@@ -1,0 +1,9 @@
+# Test double only. Real Stefan services are integrated separately.
+services:
+  test-partner:
+    image: python:3.12-slim
+    command: ["python", "/tests/partner_stub.py"]
+    volumes: ["./tests/partner_stub.py:/tests/partner_stub.py:ro"]
+    networks:
+      default:
+        aliases: [uporabniki, termini]

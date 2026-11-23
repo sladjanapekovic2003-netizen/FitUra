@@ -1,12 +1,13 @@
 """Obvestila in nastavitve obveščanja."""
 import os
-import sqlite3
-from contextlib import closing
+import psycopg
+from psycopg.rows import dict_row
 from flask import Flask, jsonify, request
 import requests
 
 app = Flask(__name__)
-DB = os.getenv("DB_PATH", "obvestila.db")
+DB = os.environ["DATABASE_URL"]
+GATEWAY = os.getenv("GATEWAY_URL", "http://localhost:8080")
 
 SCHEMAS = {
     "obvestila": {
@@ -23,19 +24,18 @@ SCHEMAS = {
 
 
 def connect():
-    conn = sqlite3.connect(DB)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg.connect(DB, row_factory=dict_row, connect_timeout=3)
 
 
-with closing(connect()) as db, db:
-    db.executescript("""
+with connect() as db:
+    db.execute("""
         CREATE TABLE IF NOT EXISTS obvestila (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, uporabnik_id INTEGER NOT NULL,
-          sporocilo TEXT NOT NULL, prebrano INTEGER NOT NULL);
+          id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, uporabnik_id INTEGER NOT NULL,
+          sporocilo TEXT NOT NULL, prebrano BOOLEAN NOT NULL);
         CREATE TABLE IF NOT EXISTS nastavitve (
-          id INTEGER PRIMARY KEY AUTOINCREMENT, uporabnik_id INTEGER NOT NULL UNIQUE,
-          email INTEGER NOT NULL, push INTEGER NOT NULL);
+          id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, uporabnik_id INTEGER NOT NULL UNIQUE,
+          email BOOLEAN NOT NULL, push BOOLEAN NOT NULL);
+        CREATE INDEX IF NOT EXISTS obvestila_uporabnik_idx ON obvestila(uporabnik_id);
     """)
 
 
@@ -49,6 +49,17 @@ def serialize(row, table):
 
 def error(message, status):
     return jsonify({"error": message}), status
+
+
+def verify_user(user):
+    try:
+        response = requests.get(GATEWAY + f"/uporabnik/{user}", timeout=3)
+        if response.status_code == 404:
+            return error("Uporabnik ne obstaja.", 409)
+        response.raise_for_status()
+    except requests.RequestException:
+        return error("Storitev uporabnikov ni dosegljiva.", 503)
+    return None
 
 
 def validate(data, table):
@@ -68,41 +79,49 @@ def validate(data, table):
 
 def collection(table):
     if request.method == "GET":
-        with closing(connect()) as db:
+        with connect() as db:
             return jsonify([serialize(r, table) for r in db.execute(f"SELECT * FROM {table} ORDER BY id")])
     data = request.get_json(silent=True)
     if not validate(data, table):
         return error("Neveljavni podatki.", 400)
+    verification = verify_user(data["uporabnik_id"])
+    if verification:
+        return verification
     fields = list(SCHEMAS[table])
     try:
-        with closing(connect()) as db, db:
-            cursor = db.execute(f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({', '.join('?' for _ in fields)})",
+        with connect() as db:
+            cursor = db.execute(f"INSERT INTO {table} ({', '.join(fields)}) VALUES ({', '.join('%s' for _ in fields)}) RETURNING id",
                                 tuple(data[f] for f in fields))
-            return jsonify({"id": cursor.lastrowid, **data}), 201
-    except sqlite3.IntegrityError:
+            return jsonify({"id": cursor.fetchone()["id"], **data}), 201
+    except psycopg.IntegrityError:
         return error("Nastavitve uporabnika že obstajajo.", 409)
 
 
 def item(table, item_id):
-    with closing(connect()) as db, db:
-        row = db.execute(f"SELECT * FROM {table} WHERE id=?", (item_id,)).fetchone()
+    with connect() as db:
+        row = db.execute(f"SELECT * FROM {table} WHERE id=%s", (item_id,)).fetchone()
         if row is None:
             return error("Zapis ne obstaja.", 404)
         if request.method == "GET":
             return jsonify(serialize(row, table))
         if request.method == "DELETE":
-            db.execute(f"DELETE FROM {table} WHERE id=?", (item_id,))
+            db.execute(f"DELETE FROM {table} WHERE id=%s", (item_id,))
             return "", 204
-        data = request.get_json(silent=True)
-        if not validate(data, table):
-            return error("Neveljavni podatki.", 400)
-        fields = list(SCHEMAS[table])
-        try:
-            db.execute(f"UPDATE {table} SET {', '.join(f'{f}=?' for f in fields)} WHERE id=?",
-                       (*[data[f] for f in fields], item_id))
-        except sqlite3.IntegrityError:
-            return error("Nastavitve uporabnika že obstajajo.", 409)
-        return jsonify({"id": item_id, **data})
+    data = request.get_json(silent=True)
+    if not validate(data, table):
+        return error("Neveljavni podatki.", 400)
+    verification = verify_user(data["uporabnik_id"])
+    if verification:
+        return verification
+    fields = list(SCHEMAS[table])
+    try:
+        with connect() as db:
+            if not db.execute(f"UPDATE {table} SET {', '.join(f'{f}=%s' for f in fields)} WHERE id=%s",
+                              (*[data[f] for f in fields], item_id)).rowcount:
+                return error("Zapis ne obstaja.", 404)
+    except psycopg.IntegrityError:
+        return error("Nastavitve uporabnika že obstajajo.", 409)
+    return jsonify({"id": item_id, **data})
 
 
 for table in SCHEMAS:
@@ -112,15 +131,24 @@ for table in SCHEMAS:
 
 @app.get("/health")
 def health():
+    with connect() as db:
+        db.execute("SELECT 1")
     return jsonify({"status": "ok"})
+
+
+@app.get("/obvestila/uporabnik/<int:user_id>")
+def user_notifications(user_id):
+    with connect() as db:
+        return jsonify([serialize(r, "obvestila") for r in db.execute(
+            "SELECT * FROM obvestila WHERE uporabnik_id=%s ORDER BY id", (user_id,))])
 
 
 @app.get("/uporabniki/<int:user_id>/povzetek")
 def summary(user_id):
-    with closing(connect()) as db:
-        count = db.execute("SELECT COUNT(*) FROM obvestila WHERE uporabnik_id=? AND prebrano=0", (user_id,)).fetchone()[0]
+    with connect() as db:
+        count = db.execute("SELECT COUNT(*) AS count FROM obvestila WHERE uporabnik_id=%s AND NOT prebrano", (user_id,)).fetchone()["count"]
     try:
-        response = requests.get(os.getenv("CLANARINE_URL", "http://localhost:8001") + "/clanarine",
+        response = requests.get(GATEWAY + "/clanarina",
                                 params={"uporabnik_id": user_id}, timeout=3)
         response.raise_for_status()
         return jsonify({"uporabnik_id": user_id, "neprebrana": count, "clanarine": response.json()})
@@ -143,14 +171,18 @@ def openapi():
         param = [{"name": "item_id", "in": "path", "required": True, "schema": {"type": "integer"}}]
         paths[f"/{table}"] = {
             "get": {"responses": {"200": json_response({"type": "array", "items": result})}},
-            "post": {"requestBody": req, "responses": {"201": json_response(result), "400": err, **({"409": err} if table == "nastavitve" else {})}},
+            "post": {"requestBody": req, "responses": {"201": json_response(result), "400": err, "409": err, "503": err}},
         }
         paths[f"/{table}/{{item_id}}"] = {
             "parameters": param,
             "get": {"responses": {"200": json_response(result), "404": err}},
-            "put": {"requestBody": req, "responses": {"200": json_response(result), "400": err, "404": err, **({"409": err} if table == "nastavitve" else {})}},
+            "put": {"requestBody": req, "responses": {"200": json_response(result), "400": err, "404": err, "409": err, "503": err}},
             "delete": {"responses": {"204": {"description": "Izbrisano"}, "404": err}},
         }
+        if table == "obvestila":
+            paths["/obvestila/uporabnik/{user_id}"] = {"get": {
+                "parameters": [{"name": "user_id", "in": "path", "required": True, "schema": {"type": "integer"}}],
+                "responses": {"200": json_response({"type": "array", "items": result})}}}
     paths["/health"] = {"get": {"responses": {"200": json_response({"type": "object", "properties": {"status": {"type": "string"}}})}}}
     paths["/uporabniki/{user_id}/povzetek"] = {"get": {
         "parameters": [{"name": "user_id", "in": "path", "required": True, "schema": {"type": "integer"}}],
