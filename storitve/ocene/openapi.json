@@ -1,0 +1,749 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "FitUra - Ocene",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/ocene": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "uporabnik_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "termin_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                      },
+                      "ocena": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "komentar": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "termin_id",
+                      "trener_id",
+                      "ocena",
+                      "komentar"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uporabnik_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "termin_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "trener_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                  },
+                  "ocena": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "komentar": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "termin_id",
+                  "ocena",
+                  "komentar"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "uporabnik_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "termin_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                    },
+                    "ocena": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 5
+                    },
+                    "komentar": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 500
+                    },
+                    "obvestilo_poslano": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "termin_id",
+                    "trener_id",
+                    "ocena",
+                    "komentar",
+                    "obvestilo_poslano"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/ocene/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "uporabnik_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "termin_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                    },
+                    "ocena": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 5
+                    },
+                    "komentar": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "termin_id",
+                    "trener_id",
+                    "ocena",
+                    "komentar"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uporabnik_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "termin_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "trener_id": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                  },
+                  "ocena": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "komentar": {
+                    "type": "string",
+                    "minLength": 0,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "termin_id",
+                  "ocena",
+                  "komentar"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "uporabnik_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "termin_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "trener_id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                    },
+                    "ocena": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 5
+                    },
+                    "komentar": {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "termin_id",
+                    "trener_id",
+                    "ocena",
+                    "komentar"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          },
+          "503": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Izbrisano"
+          },
+          "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/ocene/termin/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "uporabnik_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "termin_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                      },
+                      "ocena": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "komentar": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "termin_id",
+                      "trener_id",
+                      "ocena",
+                      "komentar"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/ocene/trener/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "uporabnik_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "termin_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "trener_id": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
+                      },
+                      "ocena": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5
+                      },
+                      "komentar": {
+                        "type": "string",
+                        "minLength": 0,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "termin_id",
+                      "trener_id",
+                      "ocena",
+                      "komentar"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/odgovori": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "ocena_id": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "besedilo": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "ocena_id",
+                      "besedilo"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ocena_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "besedilo": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "ocena_id",
+                  "besedilo"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "ocena_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "besedilo": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ocena_id",
+                    "besedilo"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/odgovori/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "ocena_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "besedilo": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ocena_id",
+                    "besedilo"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ocena_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "besedilo": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "ocena_id",
+                  "besedilo"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "ocena_id": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "besedilo": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "ocena_id",
+                    "besedilo"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Izbrisano"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Uspeh",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Uporabniki API",
+    "version": "1.0.0",
+    "description": "Mikrostoritev za upravljanje uporabnikov v sistemu FitUra"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Preveri povezavo s podatkovno bazo",
+        "responses": {
+          "200": {
+            "description": "Storitev deluje"
+          },
+          "503": {
+            "description": "Podatkovna baza ni dosegljiva"
+          }
+        }
+      }
+    },
+    "/uporabniki": {
+      "get": {
+        "summary": "Pridobi seznam vseh uporabnikov",
+        "responses": {
+          "200": {
+            "description": "Seznam uporabnikov"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Izbriši vse uporabnike (admin/test endpoint)",
+        "responses": {
+          "200": {
+            "description": "Vsi uporabniki izbrisani"
+          }
+        }
+      }
+    },
+    "/uporabniki/{id}": {
+      "get": {
+        "summary": "Pridobi enega uporabnika po ID-ju",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Podatki uporabnika"
+          },
+          "404": {
+            "description": "Uporabnik ne obstaja"
+          }
+        }
+      },
+      "put": {
+        "summary": "Urejanje profila uporabnika",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ime": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uporabnik posodobljen"
+          },
+          "404": {
+            "description": "Uporabnik ne obstaja"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Izbriši enega uporabnika",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Uporabnik izbrisan"
+          },
+          "404": {
+            "description": "Uporabnik ne obstaja"
+          }
+        }
+      }
+    },
+    "/uporabnik/{id}": {
+      "get": {
+        "summary": "Pridobi uporabnika (pot iz prvotnega načrta)",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Podatki uporabnika"
+          },
+          "404": {
+            "description": "Uporabnik ne obstaja"
+          }
+        }
+      }
+    },
+    "/uporabniki/{id}/clanarstvo": {
+      "get": {
+        "summary": "Pridobi članarine uporabnika (storitev Clanarine)",
+        "tags": [
+          "Uporabniki"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Seznam članarin uporabnika"
+          },
+          "503": {
+            "description": "Storitev Clanarine ni dosegljiva"
+          }
+        }
+      }
+    },
+    "/registracija": {
+      "post": {
+        "summary": "Registracija novega uporabnika",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ime": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "geslo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Uporabnik ustvarjen"
+          },
+          "409": {
+            "description": "Email že obstaja"
+          }
+        }
+      }
+    },
+    "/prijava": {
+      "post": {
+        "summary": "Prijava uporabnika",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "geslo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uspešna prijava"
+          },
+          "401": {
+            "description": "Napačen email ali geslo"
+          }
+        }
+      }
+    },
+    "/uporabniki/{id}/geslo": {
+      "put": {
+        "summary": "Sprememba gesla",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "staro_geslo": {
+                    "type": "string"
+                  },
+                  "novo_geslo": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Geslo spremenjeno"
+          },
+          "401": {
+            "description": "Staro geslo ni pravilno"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}
