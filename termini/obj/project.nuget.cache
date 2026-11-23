@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "V+4VTBMdzV0=",
+  "success": true,
+  "projectFilePath": "/Users/barbulovic/Desktop/FitUra/termini/Termini.csproj",
+  "expectedPackageFiles": [
+    "/Users/barbulovic/.nuget/packages/microsoft.aspnetcore.openapi/10.0.10/microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
+    "/Users/barbulovic/.nuget/packages/microsoft.openapi/2.7.5/microsoft.openapi.2.7.5.nupkg.sha512",
+    "/Users/barbulovic/.nuget/packages/npgsql/10.0.3/npgsql.10.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
