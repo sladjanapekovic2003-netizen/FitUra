@@ -39,7 +39,7 @@ class FitUraTests(unittest.TestCase):
                 raise RuntimeError(f"{service} is not ready")
         for _ in range(30):
             try:
-                call("gateway", "GET", "/uporabnik/1")
+                call("gateway", "GET", "/uporabniki/1")
                 call("gateway", "GET", "/termini/1")
                 break
             except (URLError, OSError, AssertionError):
@@ -56,6 +56,12 @@ class FitUraTests(unittest.TestCase):
             for method in ("get", "post", "put", "delete"):
                 count = sum(method in path for path in spec["paths"].values())
                 self.assertGreaterEqual(count, 2, (service, method))
+
+    def test_partner_routes(self):
+        self.assertEqual(call("gateway", "GET", "/uporabniki/1")["id"], 1)
+        self.assertEqual(call("gateway", "GET", "/termini/1")["id"], 1)
+        call("gateway", "GET", "/uporabniki/999", expected=404)
+        call("gateway", "GET", "/termini/999", expected=404)
 
     def crud(self, service, resource, data, update):
         created = call(service, "POST", resource, data, 201)

@@ -10,9 +10,9 @@ Ekipa: Sladjana in Stefan (Ssqured).
 | Sladjana | Članarine | Python / FastAPI | 8001 | Implementirano |
 | Sladjana | Obvestila | Python / Flask | 8002 | Implementirano |
 | Sladjana | Ocene | Node.js / Express | 8003 | Implementirano |
-| Stefan | Uporabniki | Stefanova izbira | 8004 | Načrt |
-| Stefan | Termini | Stefanova izbira | 8005 | Načrt |
-| Stefan | Rezervacije | Stefanova izbira | 8006 | Načrt |
+| Stefan | Uporabniki | Express | 3001 | Veja stefan-dev |
+| Stefan | Termini | ASP.NET Core | 3002 | Veja stefan-dev |
+| Stefan | Rezervacije | FastAPI | 3003 | Veja stefan-dev |
 
 Vsaka implementirana storitev ima svoj PostgreSQL strežnik, svojo bazo in trajni Docker volume.
 Podatkovne baze si ne delijo; komunikacija med storitvami poteka prek skupnega REST API Gateway-a (Nginx).
@@ -30,8 +30,8 @@ docker compose ps
 
 API Gateway je na http://localhost:8080. Kontejnerji Uporabniki, Termini in
 Rezervacije morajo biti ob združitvi na istem Docker omrežju z imeni
-`uporabniki`, `termini`, `rezervacije` in notranjim portom 8000.
-Če uporabljajo druge porte, prilagodite upstream v `gateway/nginx.conf`.
+`uporabniki`, `termini`, `rezervacije` in notranjimi porti 3001, 3002 in 3003,
+skladno s Stefanovo implementacijo.
 
 Dokler Stefanove storitve niso na voljo, lahko lokalno preverimo HTTP pogodbo
 s testnim dvojnikom, ki **ni implementacija** njegovih mikrostoritev:
@@ -103,12 +103,12 @@ Ocena lahko vsebuje tudi `trener_id`.
 
 Klici med članoma skupine (vsi preko `http://gateway:8080`):
 
-- Članarine → Uporabniki: GET /uporabnik/{id} pred ustvarjanjem in posodabljanjem članarine.
-- Obvestila → Uporabniki: GET /uporabnik/{id} pred ustvarjanjem in posodabljanjem obvestila ali nastavitev.
+- Članarine → Uporabniki: GET /uporabniki/{id} pred ustvarjanjem in posodabljanjem članarine.
+- Obvestila → Uporabniki: GET /uporabniki/{id} pred ustvarjanjem in posodabljanjem obvestila ali nastavitev.
 - Ocene → Termini: GET /termini/{id} pred ustvarjanjem in posodabljanjem ocene.
 
 Če zunanji zapis ne obstaja, storitev vrne 409 in ga ne shrani.
-Če je odvisna storitev nedosegljiva, vrne 503. API pogodba sledi prvotnemu načrtu:
+Če je odvisna storitev nedosegljiva, vrne 503. API pogodba je usklajena z dejanskima potema /uporabniki/{id} in /termini/{id}:
 200 za obstoječi zapis, 404 za neobstoječega. Po združitvi je treba preveriti
 točne poti, podatkovne tipe in po potrebi avtorizacijo s Stefanom.
 

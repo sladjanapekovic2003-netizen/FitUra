@@ -119,7 +119,7 @@ def notify(user):
 
 def verify_user(user):
     try:
-        response = httpx.get(GATEWAY + f"/uporabnik/{user}", timeout=3)
+        response = httpx.get(GATEWAY + f"/uporabniki/{user}", timeout=3)
         if response.status_code == 404:
             raise HTTPException(409, "Uporabnik ne obstaja.")
         response.raise_for_status()

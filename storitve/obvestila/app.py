@@ -53,7 +53,7 @@ def error(message, status):
 
 def verify_user(user):
     try:
-        response = requests.get(GATEWAY + f"/uporabnik/{user}", timeout=3)
+        response = requests.get(GATEWAY + f"/uporabniki/{user}", timeout=3)
         if response.status_code == 404:
             return error("Uporabnik ne obstaja.", 409)
         response.raise_for_status()
