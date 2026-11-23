@@ -31,7 +31,8 @@
                       "trener_id": {
                         "type": "integer",
                         "minimum": 1,
-                        "nullable": true
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                       },
                       "ocena": {
                         "type": "integer",
@@ -78,7 +79,8 @@
                   "trener_id": {
                     "type": "integer",
                     "minimum": 1,
-                    "nullable": true
+                    "nullable": true,
+                    "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                   },
                   "ocena": {
                     "type": "integer",
@@ -124,7 +126,8 @@
                     "trener_id": {
                       "type": "integer",
                       "minimum": 1,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                     },
                     "ocena": {
                       "type": "integer",
@@ -200,7 +203,8 @@
                     "trener_id": {
                       "type": "integer",
                       "minimum": 1,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                     },
                     "ocena": {
                       "type": "integer",
@@ -249,7 +253,8 @@
                   "trener_id": {
                     "type": "integer",
                     "minimum": 1,
-                    "nullable": true
+                    "nullable": true,
+                    "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                   },
                   "ocena": {
                     "type": "integer",
@@ -295,7 +300,8 @@
                     "trener_id": {
                       "type": "integer",
                       "minimum": 1,
-                      "nullable": true
+                      "nullable": true,
+                      "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                     },
                     "ocena": {
                       "type": "integer",
@@ -385,7 +391,8 @@
                       "trener_id": {
                         "type": "integer",
                         "minimum": 1,
-                        "nullable": true
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                       },
                       "ocena": {
                         "type": "integer",
@@ -454,7 +461,8 @@
                       "trener_id": {
                         "type": "integer",
                         "minimum": 1,
-                        "nullable": true
+                        "nullable": true,
+                        "description": "ID iz storitve Termini. Če ni podan, se določi samodejno."
                       },
                       "ocena": {
                         "type": "integer",

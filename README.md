@@ -1,71 +1,55 @@
 # FitUra – prva naloga
 
-Mikrostoritvena spletna aplikacija za rezervacijo terminov v fitnes centru.
-Ekipa: Sladjana in Stefan (Ssqured).
+FitUra je mikrostoritvena spletna aplikacija za rezervacijo terminov v fitnes centru.
+Ekipa Ssqured: Sladjana Peković in Stefan Barbulović.
 
-## Razdelitev dela
+## Razdelitev dela in tehnologije
 
-| Lastnik | Mikrostoritev | Framework | Lokalni port | Status |
+| Mikrostoritev | Razvijalec | Framework | Lokalni port | Podatkovna baza |
 |---|---|---|---:|---|
-| Sladjana | Članarine | Python / FastAPI | 8001 | Implementirano |
-| Sladjana | Obvestila | Python / Flask | 8002 | Implementirano |
-| Sladjana | Ocene | Node.js / Express | 8003 | Implementirano |
-| Stefan | Uporabniki | Express | 3001 | Veja stefan-dev |
-| Stefan | Termini | ASP.NET Core | 3002 | Veja stefan-dev |
-| Stefan | Rezervacije | FastAPI | 3003 | Veja stefan-dev |
+| Uporabniki | Stefan | Node.js / Express | 3001 | uporabniki_db |
+| Termini | Stefan | ASP.NET Core | 3002 | termini_db |
+| Rezervacije | Stefan | Python / FastAPI | 3003 | rezervacije_db |
+| Članarine | Sladjana | Python / FastAPI | 8001 | clanarine |
+| Obvestila | Sladjana | Python / Flask | 8002 | obvestila |
+| Ocene | Sladjana | Node.js / Express | 8003 | ocene |
 
-Vsaka implementirana storitev ima svoj PostgreSQL strežnik, svojo bazo in trajni Docker volume.
-Podatkovne baze si ne delijo; komunikacija med storitvami poteka prek skupnega REST API Gateway-a (Nginx).
-Uporabljeni so trije različni spletni frameworki.
+Vsaka storitev ima svoj PostgreSQL strežnik, bazo in trajni Docker volume.
+Uporabljeni so štirje spletni frameworki. Vse storitve komunicirajo prek REST
+API Gateway-a (Nginx) na portu 8080. Baz si med seboj ne delijo.
 
-## Zagon
+## Lokalni zagon
 
-Potrebujete Git, Docker Desktop, Python 3 (za integracijske teste) in po želji VS Code.
-V terminalu v korenu projekta:
+Potrebujete Docker Desktop, Git in Python 3 (za integracijske teste).
+V korenu združene različice repozitorija:
 
 ```sh
 docker compose up --build -d
 docker compose ps
-```
-
-API Gateway je na http://localhost:8080. Kontejnerji Uporabniki, Termini in
-Rezervacije morajo biti ob združitvi na istem Docker omrežju z imeni
-`uporabniki`, `termini`, `rezervacije` in notranjimi porti 3001, 3002 in 3003,
-skladno s Stefanovo implementacijo.
-
-Dokler Stefanove storitve niso na voljo, lahko lokalno preverimo HTTP pogodbo
-s testnim dvojnikom, ki **ni implementacija** njegovih mikrostoritev:
-
-```sh
-docker compose -f compose.yaml -f compose.test.yaml up --build -d
 python3 tests/test_api.py
-docker compose -f compose.yaml -f compose.test.yaml rm -sf test-partner
-python3 tests/test_partner_unavailable.py
 ```
 
-Zadnji test je namenjen stanju brez pravih partnerskih storitev.
-Testni dvojnik je samo v dodatni konfiguraciji in ni vključen pri običajnem
-zagonu. Končno povezovanje in testiranje z dejanskima storitvama Uporabniki in
-Termini je potrebno po njuni implementaciji. Ne zaganjajte dvojnika hkrati z
-njunima pravima kontejnerjema.
-
-Prvi zagon lahko traja več minut zaradi prenosa slik. Docker Desktop mora biti vklopljen.
+Prvi zagon lahko traja nekaj minut zaradi prenosa Docker slik. Delovati mora
+13 kontejnerjev: šest storitev, šest PostgreSQL strežnikov in API Gateway.
+Za integracijo se uporabljajo resnične storitve, brez simulatorjev.
+Projekt Docker ima ime `fitura-integration` in nove volumne; podatki iz
+prejšnjih lokalnih razvojnih projektov ostanejo v svojih volumnih.
+Če prejšnji projekt še uporablja iste porte, ga najprej ustavite.
 Za ustavitev brez brisanja podatkov uporabite `docker compose down`.
-PostgreSQL podatkovne baze niso izpostavljene gostiteljskemu omrežju.
-Privzeto geslo je namenjeno izključno lokalnemu razvoju; prepišite ga prek
-`POSTGRES_PASSWORD` (npr. v ignorirani datoteki .env) pred prvim zagonom.
-SQLite volumni iz prejšnje verzije niso izbrisani ali preneseni; nova baza
-se inicializira prazna.
 
-| Storitev | Health | OpenAPI |
+## API dokumentacija
+
+| Storitev | OpenAPI | Interaktivna dokumentacija |
 |---|---|---|
-| Članarine | http://localhost:8001/health | http://localhost:8001/docs |
-| Obvestila | http://localhost:8002/health | http://localhost:8002/openapi.json |
-| Ocene | http://localhost:8003/health | http://localhost:8003/openapi.json |
+| Uporabniki | http://localhost:3001/openapi.json | http://localhost:3001/dokumentacija |
+| Termini | http://localhost:3002/openapi.json | uvoz OpenAPI v Postman |
+| Rezervacije | http://localhost:3003/openapi.json | http://localhost:3003/docs |
+| Članarine | http://localhost:8001/openapi.json | http://localhost:8001/docs |
+| Obvestila | http://localhost:8002/openapi.json | uvoz OpenAPI v Postman |
+| Ocene | http://localhost:8003/openapi.json | uvoz OpenAPI v Postman |
 
-FastAPI ima vgrajen Swagger UI. Za Flask in Express uvozite njuno datoteko
-`openapi.json` v Postman oziroma odprite specifikacijo v urejevalniku Swagger.
-Po spremembi API-ja obnovite datoteke specifikacij z:
+Vsaka mikrostoritev samostojno izpostavi tudi pot `/health`.
+Po spremembi API-ja obnovite izvožene specifikacije:
 
 ```sh
 python3 tests/export_openapi.py
@@ -73,114 +57,87 @@ python3 tests/export_openapi.py
 
 ## REST operacije
 
-Za vsak spodnji par entitet je na voljo vseh pet operacij:
+| Mikrostoritev | GET | POST | PUT | DELETE |
+|---|---:|---:|---:|---:|
+| Uporabniki | 3 | 2 | 2 | 2 |
+| Termini | 3 | 2 | 2 | 2 |
+| Rezervacije | 3 | 2 | 2 | 2 |
+| Članarine | 4 | 2 | 2 | 2 |
+| Obvestila | 6 | 2 | 2 | 2 |
+| Ocene | 6 | 2 | 2 | 2 |
 
-| Metoda | Pot | Namen |
+Tehnične poti in združljivostni aliasi niso všteti.
+Poti `/uporabnik/{id}` in `/clanarina/{id}` iz prvotnega načrta so ohranjene;
+tudi množinski različici ostajata na voljo.
+
+## Komunikacija med storitvami
+
+Vsi medsebojni HTTP klici uporabljajo notranji naslov `http://gateway:8080`.
+
+| Vir | Cilj | Namen in pot |
 |---|---|---|
-| GET | /entiteta | Seznam |
-| GET | /entiteta/{id} | En zapis |
-| POST | /entiteta | Ustvari zapis |
-| PUT | /entiteta/{id} | Posodobi celoten zapis (vsa polja) |
-| DELETE | /entiteta/{id} | Izbriši zapis |
+| Članarine | Uporabniki | Preverjanje uporabnika: GET /uporabniki/{id} |
+| Obvestila | Uporabniki | Preverjanje prejemnika: GET /uporabniki/{id} |
+| Ocene | Termini | Preverjanje termina in identifikatorja trenerja: GET /termini/{id} |
+| Uporabniki | Članarine | Članarine uporabnika: GET /clanarine?uporabnik_id={id} |
+| Termini | Ocene | Ocene termina: GET /ocene/termin/{id} |
+| Rezervacije | Obvestila | Potrditev rezervacije: POST /obvestila |
 
-| Mikrostoritev | Entiteta 1 | Entiteta 2 | GET | POST | PUT | DELETE |
-|---|---|---|---:|---:|---:|---:|
-| Članarine | /paketi | /clanarina | 4 | 2 | 2 | 2 |
-| Obvestila | /obvestila | /nastavitve | 6 | 2 | 2 | 2 |
-| Ocene | /ocene | /odgovori | 6 | 2 | 2 | 2 |
+Dodatno Rezervacije preverijo uporabnika in termin, Ocene preverijo uporabnika,
+Članarine in Ocene pošljejo obvestilo, Obvestila pa pridobijo članarine za povzetek.
 
-Število GET ne vključuje tehničnih poti /health in /openapi.json.
-Statusi: 200 (uspeh), 201 (ustvarjeno), 204 (izbrisano),
-400 ali 422 (neveljavni podatki), 404 (ni zapisa), 409 (konflikt), 503 (odvisna storitev ni dosegljiva).
+Termini dodelijo stabilen ID trenerju v lastni tabeli `trenerji` glede na njegovo ime.
+Pri ustvarjanju termina se še vedno vnese ime trenerja. `GET /termini/{id}`
+vrne `trener_id`; Ocene ga samodejno prevzamejo. Če odjemalec poda drug ID,
+se zahteva zavrne s 409. Prikaz ocen je mogoč po terminu ali trenerju.
 
-Operacije iz prvotnega načrta: GET/POST/PUT `/clanarina` (GET/PUT po ID),
-POST `/obvestila`, GET `/obvestila/uporabnik/{id}`, POST `/ocene`,
-GET `/ocene/termin/{id}` in GET `/ocene/trener/{id}`.
-Pot `/clanarine` ostaja združljiva s prejšnjo različico.
-Ocena lahko vsebuje tudi `trener_id`.
+## Primer demonstracije
 
-## Medsebojna komunikacija prek API Gateway-a
+Vse zahteve lahko pošljete prek Gateway-a na http://localhost:8080, ali neposredno
+prek dokumentacije mikrostoritve. V naslednjih korakih uporabite dejanske ID-je iz odgovorov.
 
-Klici med članoma skupine (vsi preko `http://gateway:8080`):
+1. POST /registracija – `{"ime":"Ana","email":"ana@example.test","geslo":"Lokalno123!"}`.
+2. POST /prijava – `{"email":"ana@example.test","geslo":"Lokalno123!"}`.
+3. POST /termini – `{"naziv":"Pilates","tip":"Vadba","trener":"Maja","datumCas":"2027-01-15T10:00:00","kapaciteta":12}`.
+4. POST /paketi – `{"naziv":"Mesecni","cena_centov":2999}`.
+5. POST /clanarina – `{"uporabnik_id":1,"paket_id":1,"zacetek":"2027-01-01","konec":"2027-02-01"}`.
+6. POST /rezervacije – `{"uporabnik_id":1,"termin_id":1}`.
+7. POST /ocene – `{"uporabnik_id":1,"termin_id":1,"ocena":5,"komentar":"Odlicno"}`.
+8. GET /obvestila/uporabnik/1 – obvestila o članarini, rezervaciji in oceni.
+9. GET /uporabniki/1/clanarstvo, GET /rezervacije/uporabnik/1 in GET /termini/1/ocena – preverjanje povezav.
 
-- Članarine → Uporabniki: GET /uporabniki/{id} pred ustvarjanjem in posodabljanjem članarine.
-- Obvestila → Uporabniki: GET /uporabniki/{id} pred ustvarjanjem in posodabljanjem obvestila ali nastavitev.
-- Ocene → Termini: GET /termini/{id} pred ustvarjanjem in posodabljanjem ocene.
+Status 201 pomeni uspešno ustvarjen zapis; 200 uspešen odgovor; 204 izbris brez
+vsebine; 400/422 neveljavne podatke; 404 manjkajoči zapis; 409 konflikt;
+503 nedosegljivo odvisno storitev.
 
-Če zunanji zapis ne obstaja, storitev vrne 409 in ga ne shrani.
-Če je odvisna storitev nedosegljiva, vrne 503. API pogodba je usklajena z dejanskima potema /uporabniki/{id} in /termini/{id}:
-200 za obstoječi zapis, 404 za neobstoječega. Po združitvi je treba preveriti
-točne poti, podatkovne tipe in po potrebi avtorizacijo s Stefanom.
-
-Dodatne povezave:
-
-- Članarine → Obvestila: POST /obvestila pri ustvarjanju članarine.
-- Ocene → Obvestila: POST /obvestila pri ustvarjanju ocene.
-- Obvestila → Članarine: GET /clanarine?uporabnik_id=ID za povzetek na
-  GET /uporabniki/{user_id}/povzetek.
-
-Članarina/ocena je shranjena tudi, če je storitev za obvestila nedosegljiva.
-Polje `obvestilo_poslano` pove, ali je obvestilo uspešno ustvarjeno.
-Povzetek vrne 503, če storitev Članarine ni dosegljiva.
-Gre za notranja obvestila v aplikaciji, ne za dejansko pošiljanje e-pošte/SMS.
-
-## Ročni primer (Swagger UI ali terminal)
-
-Za spodnje primere morata biti na voljo Uporabniki in Termini (ali testni dvojnik).
-
-Najprej ustvarite paket in si zapišite njegov dejanski ID:
-
-```sh
-curl -X POST http://localhost:8080/paketi \
-  -H 'Content-Type: application/json' \
-  -d '{"naziv":"Mesecni","cena_centov":2999}'
-```
-
-Če odgovor vrne ID 1, ustvarite članarino (sicer vnesite vrnjeni ID):
-
-```sh
-curl -X POST http://localhost:8080/clanarina \
-  -H 'Content-Type: application/json' \
-  -d '{"uporabnik_id":1,"paket_id":1,"zacetek":"2026-11-23","konec":"2026-12-23"}'
-curl http://localhost:8080/obvestila/uporabnik/1
-curl http://localhost:8080/uporabniki/1/povzetek
-```
-
-Nato ustvarite oceno:
-
-```sh
-curl -X POST http://localhost:8080/ocene \
-  -H 'Content-Type: application/json' \
-  -d '{"uporabnik_id":1,"termin_id":1,"trener_id":10,"ocena":5,"komentar":"Odlicno"}'
-curl http://localhost:8080/ocene/termin/1
-curl http://localhost:8080/ocene/trener/10
-```
-
-## Datotečna struktura
+## Struktura
 
 ```text
 FitUra/
 ├── compose.yaml
-├── README.md
-├── compose.test.yaml
 ├── gateway/nginx.conf
+├── uporabniki/       # Express, Dockerfile, init.sql
+├── termini/          # ASP.NET Core, Dockerfile, init.sql
+├── rezervacije/      # FastAPI, Dockerfile, init.sql
 ├── storitve/
-│   ├── clanarine/  (app.py, requirements.txt, Dockerfile, openapi.json)
-│   ├── obvestila/  (app.py, requirements.txt, Dockerfile, openapi.json)
-│   └── ocene/      (app.js, package.json, package-lock.json, Dockerfile, openapi.json)
+│   ├── clanarine/    # FastAPI, Dockerfile
+│   ├── obvestila/    # Flask, Dockerfile
+│   └── ocene/        # Express, Dockerfile
 └── tests/
     ├── test_api.py
-    ├── test_partner_unavailable.py
-    ├── partner_stub.py
     └── export_openapi.py
 ```
 
-## Dobre prakse in meje prve naloge
+## Dobre prakse in omejitve
 
-Ločeni PostgreSQL strežniki in volumni, parametrizirane SQL poizvedbe, indeksi za
-filtriranje, zapiranje povezav in omejen connection pool, validacija vhodov,
-HTTP časovne omejitve, smiselne statusne kode, majhne osnovne Docker slike
-(slim in alpine), verzionirane knjižnice, OpenAPI in integracijski testi.
-Baze vsebujejo samo lokalne razvojne podatke.
-Prva naloga še ne vključuje prijave, avtorizacije, dejanskega plačevanja, frontenda
-ali varne produkcijske namestitve. Teh API-jev ne izpostavljajte internetu.
+Ločene baze in volumni, parametrizirane SQL poizvedbe, indeksi, validacija
+vhodov, časovne omejitve HTTP klicev, omejena uporaba povezav, majhne Docker
+slike in OpenAPI. Geslo baze je lokalna privzeta vrednost, ki se lahko nadomesti
+prek spremenljivke `POSTGRES_PASSWORD` v lokalni datoteki .env pred prvim zagonom.
+PostgreSQL strežniki niso izpostavljeni zunaj Docker omrežja, HTTP porti pa
+so vezani na localhost.
+
+To je razvojna različica prve naloge, ne produkcijska namestitev.
+Frontend, celovita avtorizacija, dejanska plačila, SMS/e-pošta in samodejni
+opomniki niso vključeni. Skupinske DELETE operacije so namenjene lokalnim
+administrativnim testom; ne uporabljajte jih nad podatki, ki jih želite ohraniti.

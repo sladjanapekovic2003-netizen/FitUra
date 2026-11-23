@@ -1,3 +1,4 @@
+name: fitura-integration
 services:
   clanarine:
     build: ./storitve/clanarine
@@ -27,6 +28,45 @@ services:
     image: nginx:alpine
     ports: ["127.0.0.1:8080:8080"]
     volumes: ["./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+  uporabniki:
+    build: ./uporabniki
+    ports: ["127.0.0.1:3001:3001"]
+    environment:
+      PORT: 3001
+      DB_HOST: uporabniki-db
+      DB_PORT: 5432
+      DB_USER: fitura
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fitura-local}
+      DB_NAME: uporabniki_db
+      GATEWAY_URL: http://gateway:8080
+    depends_on:
+      uporabniki-db: {condition: service_healthy}
+  termini:
+    build: ./termini
+    ports: ["127.0.0.1:3002:3002"]
+    environment:
+      DB_HOST: termini-db
+      DB_PORT: 5432
+      DB_USER: fitura
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fitura-local}
+      DB_NAME: termini_db
+      GATEWAY_URL: http://gateway:8080
+    depends_on:
+      termini-db: {condition: service_healthy}
+  rezervacije:
+    build: ./rezervacije
+    ports: ["127.0.0.1:3003:3003"]
+    environment:
+      DB_HOST: rezervacije-db
+      DB_PORT: 5432
+      DB_USER: fitura
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-fitura-local}
+      DB_NAME: rezervacije_db
+      TERMINI_URL: http://gateway:8080
+      OBVESTILA_URL: http://gateway:8080
+      UPORABNIKI_URL: http://gateway:8080
+    depends_on:
+      rezervacije-db: {condition: service_healthy}
   clanarine-db:
     image: postgres:17-alpine
     environment: {POSTGRES_USER: fitura, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-fitura-local}", POSTGRES_DB: clanarine}
@@ -54,7 +94,43 @@ services:
       interval: 3s
       timeout: 3s
       retries: 20
+  uporabniki-db:
+    image: postgres:17-alpine
+    environment: {POSTGRES_USER: fitura, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-fitura-local}", POSTGRES_DB: uporabniki_db}
+    volumes:
+      - uporabniki-pg:/var/lib/postgresql/data
+      - ./uporabniki/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U fitura -d uporabniki_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  termini-db:
+    image: postgres:17-alpine
+    environment: {POSTGRES_USER: fitura, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-fitura-local}", POSTGRES_DB: termini_db}
+    volumes:
+      - termini-pg:/var/lib/postgresql/data
+      - ./termini/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U fitura -d termini_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  rezervacije-db:
+    image: postgres:17-alpine
+    environment: {POSTGRES_USER: fitura, POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-fitura-local}", POSTGRES_DB: rezervacije_db}
+    volumes:
+      - rezervacije-pg:/var/lib/postgresql/data
+      - ./rezervacije/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U fitura -d rezervacije_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 volumes:
   clanarine-pg:
   obvestila-pg:
   ocene-pg:
+  uporabniki-pg:
+  termini-pg:
+  rezervacije-pg:

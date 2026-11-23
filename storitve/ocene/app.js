@@ -23,7 +23,7 @@ const schemas = {
   ocene: {
     uporabnik_id: { type: 'integer', minimum: 1 },
     termin_id: { type: 'integer', minimum: 1 },
-    trener_id: { type: 'integer', minimum: 1, nullable: true },
+    trener_id: { type: 'integer', minimum: 1, nullable: true, description: 'ID iz storitve Termini. Če ni podan, se določi samodejno.' },
     ocena: { type: 'integer', minimum: 1, maximum: 5 },
     komentar: { type: 'string', minLength: 0, maxLength: 500 }
   },
@@ -63,8 +63,25 @@ async function verifyTerm(data, res) {
     const response = await fetch(gateway + '/termini/' + data.termin_id, { signal: AbortSignal.timeout(3000) });
     if (response.status === 404) { fail(res, 409, 'Termin ne obstaja.'); return false; }
     if (!response.ok) { fail(res, 503, 'Storitev terminov ni dosegljiva.'); return false; }
+    const term = await response.json();
+    if (!Number.isInteger(term.trener_id) || term.trener_id <= 0) {
+      fail(res, 503, 'Termin nima veljavnega ID trenerja.'); return false;
+    }
+    if (data.trener_id != null && data.trener_id !== term.trener_id) {
+      fail(res, 409, 'Trener ne pripada temu terminu.'); return false;
+    }
+    data.trener_id = term.trener_id;
     return true;
   } catch { fail(res, 503, 'Storitev terminov ni dosegljiva.'); return false; }
+}
+
+async function verifyUser(data, res) {
+  try {
+    const response = await fetch(gateway + '/uporabniki/' + data.uporabnik_id, { signal: AbortSignal.timeout(3000) });
+    if (response.status === 404) { fail(res, 409, 'Uporabnik ne obstaja.'); return false; }
+    if (!response.ok) { fail(res, 503, 'Storitev uporabnikov ni dosegljiva.'); return false; }
+    return true;
+  } catch { fail(res, 503, 'Storitev uporabnikov ni dosegljiva.'); return false; }
 }
 
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
@@ -89,7 +106,7 @@ for (const [table, fields] of Object.entries(schemas)) {
     try {
       const data = req.body;
       if (!validate(data, fields)) return fail(res, 400, 'Neveljavni podatki.');
-      if (table === 'ocene' && !await verifyTerm(data, res)) return;
+      if (table === 'ocene' && (!await verifyTerm(data, res) || !await verifyUser(data, res))) return;
       const result = await db.query(`INSERT INTO ${table} (${keys.join(',')}) VALUES (${keys.map((_, i) => '$' + (i + 1)).join(',')}) RETURNING *`, keys.map(k => data[k] ?? null));
       const row = result.rows[0];
       if (table === 'ocene') row.obvestilo_poslano = await notify(data.uporabnik_id);
@@ -100,7 +117,7 @@ for (const [table, fields] of Object.entries(schemas)) {
     const id = Number(req.params.id);
     if (!validId(req.params.id) || !await get(id)) return fail(res, 404, 'Zapis ne obstaja.');
     if (!validate(req.body, fields)) return fail(res, 400, 'Neveljavni podatki.');
-    if (table === 'ocene' && !await verifyTerm(req.body, res)) return;
+    if (table === 'ocene' && (!await verifyTerm(req.body, res) || !await verifyUser(req.body, res))) return;
     const result = await db.query(`UPDATE ${table} SET ${keys.map((k, i) => k + '=$' + (i + 1)).join(',')} WHERE id=$${keys.length + 1} RETURNING *`, [...keys.map(k => req.body[k] ?? null), id]);
     return result.rows[0] ? res.json(result.rows[0]) : fail(res, 404, 'Zapis ne obstaja.');
   }));

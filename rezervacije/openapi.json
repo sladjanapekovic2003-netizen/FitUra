@@ -1,0 +1,440 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FitUra - Rezervacije",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rezervacije": {
+      "get": {
+        "summary": "Seznam Rezervacij",
+        "operationId": "seznam_rezervacij_rezervacije_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Nova Rezervacija",
+        "operationId": "nova_rezervacija_rezervacije_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RezervacijaVnos"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Termin ne obstaja"
+          },
+          "409": {
+            "description": "Neveljaven uporabnik ali odpovedan termin"
+          },
+          "503": {
+            "description": "Odvisna storitev ni dosegljiva"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Izbrisi Vse",
+        "operationId": "izbrisi_vse_rezervacije_delete",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rezervacije/uporabnik/{uporabnik_id}": {
+      "get": {
+        "summary": "Rezervacije Uporabnika",
+        "operationId": "rezervacije_uporabnika_rezervacije_uporabnik__uporabnik_id__get",
+        "parameters": [
+          {
+            "name": "uporabnik_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Uporabnik Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rezervacije/{rezervacija_id}": {
+      "get": {
+        "summary": "Ena Rezervacija",
+        "operationId": "ena_rezervacija_rezervacije__rezervacija_id__get",
+        "parameters": [
+          {
+            "name": "rezervacija_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rezervacija Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Uredi Rezervacijo",
+        "operationId": "uredi_rezervacijo_rezervacije__rezervacija_id__put",
+        "parameters": [
+          {
+            "name": "rezervacija_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rezervacija Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RezervacijaVnos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Rezervacija ali termin ne obstaja"
+          },
+          "409": {
+            "description": "Neveljaven uporabnik ali odpovedan termin"
+          },
+          "503": {
+            "description": "Odvisna storitev ni dosegljiva"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Izbrisi Rezervacijo",
+        "operationId": "izbrisi_rezervacijo_rezervacije__rezervacija_id__delete",
+        "parameters": [
+          {
+            "name": "rezervacija_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rezervacija Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rezervacije/{rezervacija_id}/potvrdi": {
+      "post": {
+        "summary": "Potrdi Rezervacijo",
+        "operationId": "potrdi_rezervacijo_rezervacije__rezervacija_id__potvrdi_post",
+        "parameters": [
+          {
+            "name": "rezervacija_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rezervacija Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rezervacije/{rezervacija_id}/status": {
+      "put": {
+        "summary": "Spremeni Status",
+        "operationId": "spremeni_status_rezervacije__rezervacija_id__status_put",
+        "parameters": [
+          {
+            "name": "rezervacija_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Rezervacija Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusVnos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RezervacijaVnos": {
+        "properties": {
+          "uporabnik_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Uporabnik Id"
+          },
+          "termin_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Termin Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uporabnik_id",
+          "termin_id"
+        ],
+        "title": "RezervacijaVnos"
+      },
+      "StatusVnos": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "aktivna",
+              "potrjena",
+              "odpovedana"
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StatusVnos"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

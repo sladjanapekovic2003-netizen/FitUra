@@ -18,6 +18,26 @@ app.get('/openapi.json', (req, res) => res.json(specifikacija));
 
 /**
  * @openapi
+ * /health:
+ *   get:
+ *     summary: Preveri povezavo s podatkovno bazo
+ *     responses:
+ *       200:
+ *         description: Storitev deluje
+ *       503:
+ *         description: Podatkovna baza ni dosegljiva
+ */
+app.get('/health', async (req, res) => {
+    try {
+        await bazenPovezav.query('SELECT 1');
+        res.json({ status: 'ok' });
+    } catch {
+        res.status(503).json({ status: 'unavailable' });
+    }
+});
+
+/**
+ * @openapi
  * /uporabniki:
  *   get:
  *     summary: Pridobi seznam vseh uporabnikov
@@ -53,8 +73,22 @@ app.get('/uporabniki', async (req, res) => {
  *         description: Podatki uporabnika
  *       404:
  *         description: Uporabnik ne obstaja
+ * /uporabnik/{id}:
+ *   get:
+ *     summary: Pridobi uporabnika (pot iz prvotnega načrta)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Podatki uporabnika
+ *       404:
+ *         description: Uporabnik ne obstaja
  */
-app.get('/uporabniki/:id', async (req, res) => {
+app.get(['/uporabniki/:id', '/uporabnik/:id'], async (req, res) => {
     try {
         const rezultat = await bazenPovezav.query(
             'SELECT id, ime, email, datum_registracije FROM uporabniki WHERE id = $1',

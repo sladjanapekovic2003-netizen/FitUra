@@ -1,8 +1,14 @@
+CREATE TABLE IF NOT EXISTS trenerji (
+    id SERIAL PRIMARY KEY,
+    ime VARCHAR(100) NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS termini (
     id SERIAL PRIMARY KEY,
     naziv VARCHAR(150) NOT NULL,
     tip VARCHAR(50) NOT NULL,
     trener VARCHAR(100) NOT NULL,
+    trener_id INTEGER REFERENCES trenerji(id),
     datum_cas TIMESTAMP NOT NULL,
     kapaciteta INT NOT NULL CHECK (kapaciteta > 0),
     aktiven BOOLEAN NOT NULL DEFAULT TRUE

@@ -6,3 +6,4 @@ CREATE TABLE IF NOT EXISTS rezervacije (
     status VARCHAR(20) NOT NULL DEFAULT 'aktivna',
     obvestilo_poslano BOOLEAN NOT NULL DEFAULT FALSE
 );
+CREATE INDEX IF NOT EXISTS rezervacije_uporabnik_idx ON rezervacije(uporabnik_id);

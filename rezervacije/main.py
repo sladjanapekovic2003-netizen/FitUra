@@ -1,6 +1,7 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime
+from typing import Literal
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -14,9 +15,10 @@ app = FastAPI(title="FitUra - Rezervacije", version="1.0.0")
 
 TERMINI_URL = os.getenv("TERMINI_URL", "http://localhost:3002")
 OBVESTILA_URL = os.getenv("OBVESTILA_URL", "http://localhost:8002")
+UPORABNIKI_URL = os.getenv("UPORABNIKI_URL", "http://localhost:3001")
 
 # Connection pool - dobra praksa, ne odpiramo nove konekcije za vsak zahtevek
-bazen = pool.SimpleConnectionPool(
+bazen = pool.ThreadedConnectionPool(
     1, 10,
     host=os.getenv("DB_HOST", "localhost"),
     port=os.getenv("DB_PORT", "5432"),
@@ -30,8 +32,8 @@ bazen = pool.SimpleConnectionPool(
 def dobi_kurzor():
     konekcija = bazen.getconn()
     try:
-        kurzor = konekcija.cursor()
-        yield kurzor
+        with konekcija.cursor() as kurzor:
+            yield kurzor
         konekcija.commit()
     except Exception:
         konekcija.rollback()
@@ -46,7 +48,7 @@ class RezervacijaVnos(BaseModel):
 
 
 class StatusVnos(BaseModel):
-    status: str
+    status: Literal["aktivna", "potrjena", "odpovedana"]
 
 
 def vrstica_v_slovar(vrstica):
@@ -67,9 +69,22 @@ def preveri_termin(termin_id: int):
         raise HTTPException(503, "Storitev Termini ni dosegljiva.")
     if odgovor.status_code == 404:
         raise HTTPException(404, "Termin ne obstaja.")
+    if not odgovor.is_success:
+        raise HTTPException(503, "Storitev Termini ni dosegljiva.")
     podatki = odgovor.json()
     if not podatki.get("aktiven", True):
         raise HTTPException(409, "Termin je odpovedan.")
+
+
+def preveri_uporabnika(uporabnik_id: int):
+    try:
+        odgovor = httpx.get(f"{UPORABNIKI_URL}/uporabniki/{uporabnik_id}", timeout=3)
+    except httpx.RequestError:
+        raise HTTPException(503, "Storitev Uporabniki ni dosegljiva.")
+    if odgovor.status_code == 404:
+        raise HTTPException(409, "Uporabnik ne obstaja.")
+    if not odgovor.is_success:
+        raise HTTPException(503, "Storitev Uporabniki ni dosegljiva.")
 
 
 def posredi_obvestilo(uporabnik_id: int, sporocilo: str) -> bool:
@@ -86,6 +101,8 @@ def posredi_obvestilo(uporabnik_id: int, sporocilo: str) -> bool:
 
 @app.get("/health")
 def health():
+    with dobi_kurzor() as kurzor:
+        kurzor.execute("SELECT 1")
     return {"status": "ok"}
 
 
@@ -124,9 +141,10 @@ def ena_rezervacija(rezervacija_id: int):
     return vrstica_v_slovar(vrstica)
 
 
-@app.post("/rezervacije", status_code=201)
+@app.post("/rezervacije", status_code=201, responses={404: {"description": "Termin ne obstaja"}, 409: {"description": "Neveljaven uporabnik ali odpovedan termin"}, 503: {"description": "Odvisna storitev ni dosegljiva"}})
 def nova_rezervacija(vnos: RezervacijaVnos):
-    preveri_termin(vnos.termin_id)  # interna provera pri Termini storitvi
+    preveri_termin(vnos.termin_id)
+    preveri_uporabnika(vnos.uporabnik_id)
 
     with dobi_kurzor() as kurzor:
         kurzor.execute(
@@ -160,9 +178,10 @@ def potrdi_rezervacijo(rezervacija_id: int):
     return {"sporocilo": "Rezervacija potrjena."}
 
 
-@app.put("/rezervacije/{rezervacija_id}")
+@app.put("/rezervacije/{rezervacija_id}", responses={404: {"description": "Rezervacija ali termin ne obstaja"}, 409: {"description": "Neveljaven uporabnik ali odpovedan termin"}, 503: {"description": "Odvisna storitev ni dosegljiva"}})
 def uredi_rezervacijo(rezervacija_id: int, vnos: RezervacijaVnos):
     preveri_termin(vnos.termin_id)
+    preveri_uporabnika(vnos.uporabnik_id)
     with dobi_kurzor() as kurzor:
         kurzor.execute(
             "UPDATE rezervacije SET uporabnik_id = %s, termin_id = %s WHERE id = %s RETURNING id",
