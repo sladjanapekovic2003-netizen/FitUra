@@ -99,6 +99,17 @@ def seznam_rezervacij():
         return [vrstica_v_slovar(v) for v in kurzor.fetchall()]
 
 
+@app.get("/rezervacije/uporabnik/{uporabnik_id}")
+def rezervacije_uporabnika(uporabnik_id: int):
+    with dobi_kurzor() as kurzor:
+        kurzor.execute(
+            "SELECT id, uporabnik_id, termin_id, datum_rezervacije, status, obvestilo_poslano "
+            "FROM rezervacije WHERE uporabnik_id = %s ORDER BY id",
+            (uporabnik_id,),
+        )
+        return [vrstica_v_slovar(v) for v in kurzor.fetchall()]
+
+
 @app.get("/rezervacije/{rezervacija_id}")
 def ena_rezervacija(rezervacija_id: int):
     with dobi_kurzor() as kurzor:
