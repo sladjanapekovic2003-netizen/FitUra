@@ -1,0 +1,580 @@
+{
+  "info": {
+    "title": "FitUra - Obvestila",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          }
+        }
+      }
+    },
+    "/nastavitve": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "email": {
+                        "type": "boolean"
+                      },
+                      "id": {
+                        "type": "integer"
+                      },
+                      "push": {
+                        "type": "boolean"
+                      },
+                      "uporabnik_id": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "email",
+                      "push"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Uspeh"
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "boolean"
+                  },
+                  "push": {
+                    "type": "boolean"
+                  },
+                  "uporabnik_id": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "email",
+                  "push"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "email": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "push": {
+                      "type": "boolean"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "email",
+                    "push"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/nastavitve/{item_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Izbrisano"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "email": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "push": {
+                      "type": "boolean"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "email",
+                    "push"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "item_id",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "boolean"
+                  },
+                  "push": {
+                    "type": "boolean"
+                  },
+                  "uporabnik_id": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "email",
+                  "push"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "email": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "push": {
+                      "type": "boolean"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "email",
+                    "push"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "404": {
+            "description": "Napaka"
+          },
+          "409": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/obvestila": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "prebrano": {
+                        "type": "boolean"
+                      },
+                      "sporocilo": {
+                        "maxLength": 500,
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "uporabnik_id": {
+                        "minimum": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "uporabnik_id",
+                      "sporocilo",
+                      "prebrano"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Uspeh"
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "prebrano": {
+                    "type": "boolean"
+                  },
+                  "sporocilo": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "uporabnik_id": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "sporocilo",
+                  "prebrano"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "prebrano": {
+                      "type": "boolean"
+                    },
+                    "sporocilo": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "sporocilo",
+                    "prebrano"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "400": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/obvestila/{item_id}": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Izbrisano"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "prebrano": {
+                      "type": "boolean"
+                    },
+                    "sporocilo": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "sporocilo",
+                    "prebrano"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "item_id",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "prebrano": {
+                    "type": "boolean"
+                  },
+                  "sporocilo": {
+                    "maxLength": 500,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "uporabnik_id": {
+                    "minimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "uporabnik_id",
+                  "sporocilo",
+                  "prebrano"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "integer"
+                    },
+                    "prebrano": {
+                      "type": "boolean"
+                    },
+                    "sporocilo": {
+                      "maxLength": 500,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "uporabnik_id": {
+                      "minimum": 1,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "uporabnik_id",
+                    "sporocilo",
+                    "prebrano"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "400": {
+            "description": "Napaka"
+          },
+          "404": {
+            "description": "Napaka"
+          }
+        }
+      }
+    },
+    "/uporabniki/{user_id}/povzetek": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "clanarine": {
+                      "items": {
+                        "properties": {
+                          "id": {
+                            "type": "integer"
+                          },
+                          "konec": {
+                            "format": "date",
+                            "type": "string"
+                          },
+                          "paket_id": {
+                            "type": "integer"
+                          },
+                          "uporabnik_id": {
+                            "type": "integer"
+                          },
+                          "zacetek": {
+                            "format": "date",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "neprebrana": {
+                      "type": "integer"
+                    },
+                    "uporabnik_id": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Uspeh"
+          },
+          "503": {
+            "description": "Napaka"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+services:
+  clanarine:
+    build: ./storitve/clanarine
+    ports: ["127.0.0.1:8001:8000"]
+    environment:
+      DB_PATH: /data/clanarine.db
+      OBVESTILA_URL: http://obvestila:8000
+    volumes: [clanarine-data:/data]
+  obvestila:
+    build: ./storitve/obvestila
+    ports: ["127.0.0.1:8002:8000"]
+    environment:
+      DB_PATH: /data/obvestila.db
+      CLANARINE_URL: http://clanarine:8000
+    volumes: [obvestila-data:/data]
+  ocene:
+    build: ./storitve/ocene
+    ports: ["127.0.0.1:8003:8000"]
+    environment:
+      DB_PATH: /data/ocene.db
+      OBVESTILA_URL: http://obvestila:8000
+    volumes: [ocene-data:/data]
+volumes:
+  clanarine-data:
+  obvestila-data:
+  ocene-data:
