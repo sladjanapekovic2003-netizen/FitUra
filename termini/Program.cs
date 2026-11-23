@@ -2,6 +2,7 @@ using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
+builder.Services.AddHttpClient();
 
 var connectionString =
     $"Host={Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost"};" +
@@ -58,6 +59,27 @@ app.MapGet("/termini/{id:int}", async (int id, NpgsqlDataSource db) =>
         kapaciteta = bralec.GetInt32(5),
         aktiven = bralec.GetBoolean(6)
     });
+});
+
+// --- GET: ocene za termin (storitev Ocene, prek gateway-a) ---
+app.MapGet("/termini/{id:int}/ocena", async (int id, IHttpClientFactory httpClientFactory) =>
+{
+    var gatewayUrl = Environment.GetEnvironmentVariable("GATEWAY_URL") ?? "http://localhost:8080";
+    var client = httpClientFactory.CreateClient();
+    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+    try
+    {
+        var odgovor = await client.GetAsync($"{gatewayUrl}/ocene/termin/{id}", cts.Token);
+        if (!odgovor.IsSuccessStatusCode)
+            return Results.Json(new { sporocilo = "Storitev ocen ni dosegljiva." }, statusCode: 503);
+
+        var vsebina = await odgovor.Content.ReadAsStringAsync();
+        return Results.Content(vsebina, "application/json");
+    }
+    catch
+    {
+        return Results.Json(new { sporocilo = "Storitev ocen ni dosegljiva." }, statusCode: 503);
+    }
 });
 
 // --- POST: nov termin ---

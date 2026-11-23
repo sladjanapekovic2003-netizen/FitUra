@@ -11,6 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
+const GATEWAY_URL = process.env.GATEWAY_URL || 'http://localhost:8080';
 
 app.use('/dokumentacija', swaggerUi.serve, swaggerUi.setup(specifikacija));
 app.get('/openapi.json', (req, res) => res.json(specifikacija));
@@ -66,6 +67,41 @@ app.get('/uporabniki/:id', async (req, res) => {
     } catch (napaka) {
         console.error(napaka);
         res.status(500).json({ sporocilo: 'Napaka pri pridobivanju uporabnika.' });
+    }
+});
+
+/**
+ * @openapi
+ * /uporabniki/{id}/clanarstvo:
+ *   get:
+ *     summary: Pridobi članarine uporabnika (storitev Clanarine)
+ *     tags: [Uporabniki]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Seznam članarin uporabnika
+ *       503:
+ *         description: Storitev Clanarine ni dosegljiva
+ */
+app.get('/uporabniki/:id/clanarstvo', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const odgovor = await fetch(`${GATEWAY_URL}/clanarine?uporabnik_id=${id}`, {
+            signal: AbortSignal.timeout(3000)
+        });
+        if (!odgovor.ok) {
+            return res.status(503).json({ sporocilo: 'Storitev članarin ni dosegljiva.' });
+        }
+        const podatki = await odgovor.json();
+        res.json(podatki);
+    } catch (napaka) {
+        console.error(napaka);
+        res.status(503).json({ sporocilo: 'Storitev članarin ni dosegljiva.' });
     }
 });
 
